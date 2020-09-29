@@ -11,3 +11,4 @@ To activate the venv, first cd into the cloned repo then run the respective comm
 `.\env\Scripts\activate`
 #### Linux/macOS
 `source env/bin/activate`
+
