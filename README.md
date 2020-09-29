@@ -2,7 +2,7 @@
 
 To run the bot you'll need Python 3.8 and the following modules:
 * discord.py
-* MySQL-python
+* psycopg2-binary
 
 You can either install them manually with pip or activate the virtual env.
 
