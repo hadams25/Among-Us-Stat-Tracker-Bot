@@ -133,6 +133,9 @@ async def on_ready():
 
 @client.event
 async def on_guild_join(guild):
+    """
+    Make  a new server table when joing a server, if one doesn't already exist
+    """
     if not table_exists("servers", guild.id):
         create_table("servers", str(guild.id))
 
