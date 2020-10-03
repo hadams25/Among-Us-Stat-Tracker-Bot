@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands as com
 import json
 import psycopg2
 import os.path
@@ -25,12 +26,15 @@ def start():
     global default_settings
     global connection
     
+    print("Checking for settings file...")
     #if the settings json file does not exist, create one
     if not path.exists("settings.json"):
         print("Settings file not found. One will be created.")
 
         with open("settings.json", "w") as j_file:
             json.dump(default_settings, j_file, indent = 4)
+    else:
+        print("Settings file found.")
     
     with open("settings.json") as j_file:
         settings = json.load(j_file)
@@ -49,14 +53,20 @@ def start():
         print("Shutting down...")
         sys.exit()
     
+    print("Verifying database connection...")
     #verify connect works
     connection = connect()
-
-    create_table("servers", "test")
-
     connection.close()
+    print("Database connection successful. \nStarting bot...")
 
-    #client.run(settings["token"])
+    temp = com.Bot(command_prefix = settings["prefix"])
+
+    print("Importing cogs:")
+    for filename in os.listdir('./cogs'):
+        if filename != "__init__.py" and filename.endswith('.py'):
+            temp.load_extension(f'cogs.{filename[:-3]}')
+
+    client.run(settings["token"])
 
 def connect():
     try:
@@ -139,6 +149,9 @@ async def on_guild_join(guild):
     if not table_exists("servers", guild.id):
         create_table("servers", str(guild.id))
 
+@com.command()
+async def ping(self, ctx):
+    await ctx.send("Pong!")
 
 if __name__ == '__main__':
     start()
