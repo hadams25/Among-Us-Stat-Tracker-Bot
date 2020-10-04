@@ -6,27 +6,28 @@ import os.path
 import sys
 from os import path
 
-client = discord.Client()
-settings = {}
-default_settings = {
-    "token" : "",
-    "status" : "",
-    "prefix" : "~",
-    "host" : "localhost",
-    "database" : "player_data",
-    "user" : "postgres",
-    "password" : "",
-    "port" : "5432"
-}
-connection = None
-
 def start():
     global client
     global settings
-    global default_settings
     global connection
     
-    print("Checking for settings file...")
+    print("Verifying database connection...")
+    #verify connect works
+    connection = connect()
+    connection.close()
+    print("Database connection successful. \nStarting bot...")
+
+    print("Importing cogs:")
+    for filename in os.listdir('./cogs'):
+        if filename != "__init__.py" and filename.endswith('.py'):
+            print((" " * 5)+"-"+ filename)
+            client.load_extension(f'cogs.{filename[:-3]}')
+
+    client.run(settings["token"])
+
+def load_settings():
+    global default_settings
+
     #if the settings json file does not exist, create one
     if not path.exists("settings.json"):
         print("Settings file not found. One will be created.")
@@ -52,21 +53,8 @@ def start():
         print("Please supply a discord bot token.")
         print("Shutting down...")
         sys.exit()
-    
-    print("Verifying database connection...")
-    #verify connect works
-    connection = connect()
-    connection.close()
-    print("Database connection successful. \nStarting bot...")
 
-    temp = com.Bot(command_prefix = settings["prefix"])
-
-    print("Importing cogs:")
-    for filename in os.listdir('./cogs'):
-        if filename != "__init__.py" and filename.endswith('.py'):
-            temp.load_extension(f'cogs.{filename[:-3]}')
-
-    client.run(settings["token"])
+    return settings
 
 def connect():
     try:
@@ -127,6 +115,28 @@ def create_table(schema: str, table: str):
     cursor.close()
     connection.close()
 
+##########################
+# Begin client variables #
+##########################
+
+default_settings = {
+    "token" : "",
+    "status" : "",
+    "prefix" : "~",
+    "host" : "localhost",
+    "database" : "player_data",
+    "user" : "postgres",
+    "password" : "",
+    "port" : "5432"
+}
+settings = load_settings()
+client = com.Bot(command_prefix = settings["prefix"])
+connection = None
+
+##############################
+# Begin client event methods #
+##############################
+
 @client.event
 async def on_ready():
     global client
@@ -148,10 +158,6 @@ async def on_guild_join(guild):
     """
     if not table_exists("servers", guild.id):
         create_table("servers", str(guild.id))
-
-@com.command()
-async def ping(self, ctx):
-    await ctx.send("Pong!")
 
 if __name__ == '__main__':
     start()
